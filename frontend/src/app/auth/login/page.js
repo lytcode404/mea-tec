@@ -225,7 +225,7 @@ export default function LoginPage() {
             }`}
           >
             <p>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <a
                 onClick={() => router.push("/auth/register")}
                 className="text-blue-500 hover:text-blue-600 cursor-pointer font-medium transition-colors"
