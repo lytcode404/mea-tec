@@ -48,31 +48,30 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Login user and generate a JWT
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Find user
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    // Generate JWT token
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 
-    res.json({ token });
+    // Return token with user details:
+    res.json({ token, name: user.name, email: user.email });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 // --------------------
 // Middleware to Protect Routes
