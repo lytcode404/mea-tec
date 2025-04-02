@@ -8,11 +8,13 @@ const { PrismaClient } = require("@prisma/client");
 const app = express();
 const prisma = new PrismaClient();
 
-// 🔹 Enable CORS (Allow requests from frontend)
-app.use(cors({
-    origin: "http://127.0.0.1:5500",  // Allow requests from your frontend
-    credentials: true,
-}));
+app.use(
+  cors({
+    origin: "*", // Allow requests from any URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 app.use(express.json());
 
