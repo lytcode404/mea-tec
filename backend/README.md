@@ -86,8 +86,8 @@ https://task-manager-dtiv.onrender.com
 ### Steps to Run Locally
 1. **Clone the Repository**
    ```sh
-   git clone https://github.com/your-repo/task-manager-auth.git
-   cd task-manager-auth
+   git clone https://github.com/lytcode404/mea-tec/tree/master/
+   cd backend
    ```
 2. **Install Dependencies**
    ```sh
@@ -97,6 +97,7 @@ https://task-manager-dtiv.onrender.com
    Create a `.env` file in the root directory and add:
    ```env
    DATABASE_URL=your-supabase-database-url
+   DIRECT_URL=your-supabse-db-url
    JWT_SECRET=your-secret-key
    ```
 4. **Run Database Migrations**
@@ -114,7 +115,7 @@ This API is hosted on **Render**. If you want to deploy your own:
 1. Push your code to **GitHub**.
 2. Go to **Render** and create a new **Web Service**.
 3. Connect your GitHub repository.
-4. Set environment variables (`DATABASE_URL`, `JWT_SECRET`).
+4. Set environment variables (`DATABASE_URL`,, `DIRECT_URL`, `JWT_SECRET`).
 5. Click **Deploy**.
 
 ## Frontend
