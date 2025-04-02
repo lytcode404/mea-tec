@@ -1,86 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Auth System</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="flex flex-col items-center justify-center h-screen bg-gray-200">
-        <div class="w-96 p-5 bg-white shadow-lg rounded-lg">
-            <h2 class="text-xl font-bold text-center">Register</h2>
-            <input
-                id="name"
-                type="text"
-                placeholder="Name"
-                class="w-full p-2 mt-2 border rounded"
-            >
-            <input
-                id="email"
-                type="email"
-                placeholder="Email"
-                class="w-full p-2 mt-2 border rounded"
-            >
-            <input
-                id="password"
-                type="password"
-                placeholder="Password"
-                class="w-full p-2 mt-2 border rounded"
-            >
-            <button onclick="register()" class="w-full mt-3 bg-blue-500 text-white p-2 rounded">Register</button>
-            <h2 class="text-xl font-bold text-center mt-5">Login</h2>
-            <input
-                id="loginEmail"
-                type="email"
-                placeholder="Email"
-                class="w-full p-2 mt-2 border rounded"
-            >
-            <input
-                id="loginPassword"
-                type="password"
-                placeholder="Password"
-                class="w-full p-2 mt-2 border rounded"
-            >
-            <button onclick="login()" class="w-full mt-3 bg-green-500 text-white p-2 rounded">Login</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Manager - Auth & Tasks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <header class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Task Manager</h1>
+        <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded">Logout</button>
+      </div>
+    </header>
+    
+    <main class="max-w-3xl mx-auto px-4 py-8">
+      <!-- Authentication Section -->
+      <section id="authSection" class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-xl font-bold text-center mb-4">Register / Login</h2>
+        <div class="space-y-4">
+          <!-- Registration Form -->
+          <div id="registerForm" class="space-y-2">
+            <input id="name" type="text" placeholder="Name" class="w-full p-2 border rounded" />
+            <input id="email" type="email" placeholder="Email" class="w-full p-2 border rounded" />
+            <input id="password" type="password" placeholder="Password" class="w-full p-2 border rounded" />
+            <button onclick="register()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded">Register</button>
+          </div>
+          <div class="border-t pt-4">
+            <!-- Login Form -->
+            <input id="loginEmail" type="email" placeholder="Email" class="w-full p-2 border rounded" />
+            <input id="loginPassword" type="password" placeholder="Password" class="w-full p-2 border rounded mt-2" />
+            <button onclick="login()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded mt-2">Login</button>
+          </div>
         </div>
-        <script>
-        async function register() {
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+      </section>
+      
+      <!-- Tasks Dashboard Section -->
+      <section id="tasksSection" class="hidden bg-white shadow rounded-lg p-6 mt-8">
+        <h2 class="text-xl font-bold text-center mb-4">Your Tasks</h2>
+        <!-- Task Form -->
+        <div id="taskForm" class="mb-6">
+          <input id="taskTitle" type="text" placeholder="Task Title" class="w-full p-2 border rounded" />
+          <input id="taskDescription" type="text" placeholder="Task Description" class="w-full p-2 border rounded mt-2" />
+          <button onclick="createTask()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded mt-2">Add Task</button>
+        </div>
+        <!-- Tasks List -->
+        <div id="tasksList" class="space-y-4"></div>
+      </section>
+    </main>
 
-    const res = await fetch("https://task-manager-dtiv.onrender.com/register", {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json"  // Ensure correct content type
-        },
-        body: JSON.stringify({ name, email, password }) // Convert to JSON string
-    });
-
-    const data = await res.json();
-    console.log(data); // Log response for debugging
-    alert(data.message);
-}
-
-
-        async function login() {
-            const email = document.getElementById("loginEmail").value;
-            const password = document.getElementById("loginPassword").value;
-
-            const res = await fetch("https://task-manager-dtiv.onrender.com/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem("jwt", data.token);
-                alert("Login successful!");
-            } else {
-                alert("Login failed!");
-            }
+    <script>
+      const API_BASE = "https://task-manager-dtiv.onrender.com";
+      
+      // Check if user is already logged in
+      document.addEventListener("DOMContentLoaded", () => {
+        const token = localStorage.getItem("jwt");
+        if (token) {
+          showTasksSection();
+          getTasks();
         }
-        </script>
-    </body>
+      });
+      
+      // Register a new user
+      async function register() {
+        const name = document.getElementById("name").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await res.json();
+        alert(data.message);
+      }
+      
+      // Login user and store JWT token
+      async function login() {
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+        
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("jwt", data.token);
+          alert("Login successful!");
+          showTasksSection();
+          getTasks();
+        } else {
+          alert("Login failed!");
+        }
+      }
+      
+      // Show tasks section and hide auth section
+      function showTasksSection() {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("tasksSection").classList.remove("hidden");
+        document.getElementById("logoutBtn").classList.remove("hidden");
+      }
+      
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("jwt");
+        document.getElementById("authSection").classList.remove("hidden");
+        document.getElementById("tasksSection").classList.add("hidden");
+        document.getElementById("logoutBtn").classList.add("hidden");
+        alert("Logged out successfully!");
+      });
+      
+      // Get tasks for the logged-in user
+      async function getTasks() {
+        const token = localStorage.getItem("jwt");
+        const res = await fetch(`${API_BASE}/api/tasks`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+        });
+        const tasks = await res.json();
+        displayTasks(tasks);
+      }
+      
+      // Display tasks in the tasksList div
+      function displayTasks(tasks) {
+        const tasksList = document.getElementById("tasksList");
+        tasksList.innerHTML = "";
+        if (tasks.length === 0) {
+          tasksList.innerHTML = "<p class='text-center text-gray-500'>No tasks found.</p>";
+          return;
+        }
+        tasks.forEach((task) => {
+          const div = document.createElement("div");
+          div.className = "border p-4 rounded shadow-sm flex flex-col";
+          div.innerHTML = `
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-lg">${task.title}</h3>
+              <span class="text-sm ${task.completed ? 'text-green-600' : 'text-red-600'}">
+                ${task.completed ? "Completed" : "Incomplete"}
+              </span>
+            </div>
+            <p class="mt-2">${task.description || ""}</p>
+            <div class="mt-4 flex space-x-2">
+              <button onclick="toggleTaskStatus('${task.id}', ${task.completed})" class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded">Toggle Status</button>
+              <button onclick="deleteTask('${task.id}')" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded">Delete</button>
+            </div>
+          `;
+          tasksList.appendChild(div);
+        });
+      }
+      
+      // Create a new task
+      async function createTask() {
+        const token = localStorage.getItem("jwt");
+        const title = document.getElementById("taskTitle").value;
+        const description = document.getElementById("taskDescription").value;
+        const res = await fetch(`${API_BASE}/api/tasks`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ title, description }),
+        });
+        const data = await res.json();
+        if (data.id) {
+          document.getElementById("taskTitle").value = "";
+          document.getElementById("taskDescription").value = "";
+          getTasks();
+        } else {
+          alert("Failed to add task.");
+        }
+      }
+      
+      // Delete a task by ID
+      async function deleteTask(taskId) {
+        const token = localStorage.getItem("jwt");
+        const res = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+        });
+        const data = await res.json();
+        alert(data.message || "Task deleted");
+        getTasks();
+      }
+      
+      // Toggle task status (update task)
+      async function toggleTaskStatus(taskId, currentStatus) {
+        const token = localStorage.getItem("jwt");
+        const res = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ completed: !currentStatus }),
+        });
+        const data = await res.json();
+        getTasks();
+      }
+    </script>
+  </body>
 </html>

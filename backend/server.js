@@ -20,8 +20,12 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
 
-// 🔹 Register User
-app.post("/register", async (req, res) => {
+// --------------------
+// Authentication Routes
+// --------------------
+
+// Register a new user
+app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -34,7 +38,7 @@ app.post("/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: { name, email, password: hashedPassword },
     });
 
@@ -44,8 +48,8 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// 🔹 Login User
-app.post("/login", async (req, res) => {
+// Login user and generate a JWT
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -70,32 +74,115 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 🔹 Middleware to Protect Routes
+// --------------------
+// Middleware to Protect Routes
+// --------------------
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // { userId: '...' }
     next();
   } catch {
     res.status(401).json({ message: "Invalid token" });
   }
 };
 
-// 🔹 Protected Route Example
-app.get("/protected", authenticate, (req, res) => {
+// --------------------
+// Task Routes (Protected)
+// --------------------
+
+// GET /api/tasks - Get tasks for the logged-in user
+app.get("/api/tasks", authenticate, async (req, res) => {
+  try {
+    const tasks = await prisma.task.findMany({
+      where: { userId: req.user.userId },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/tasks - Create a new task
+app.post("/api/tasks", authenticate, async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const task = await prisma.task.create({
+      data: {
+        title,
+        description,
+        userId: req.user.userId,
+      },
+    });
+    res.status(201).json(task);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/tasks/:id - Update an existing task
+app.put("/api/tasks/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, completed } = req.body;
+
+    // Ensure the task belongs to the user
+    const existingTask = await prisma.task.findUnique({ where: { id } });
+    if (!existingTask || existingTask.userId !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: { title, description, completed },
+    });
+    res.json(updatedTask);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/tasks/:id - Delete a task
+app.delete("/api/tasks/:id", authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Ensure the task belongs to the user
+    const existingTask = await prisma.task.findUnique({ where: { id } });
+    if (!existingTask || existingTask.userId !== req.user.userId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await prisma.task.delete({ where: { id } });
+    res.json({ message: "Task deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --------------------
+// Example Protected Route (optional)
+// --------------------
+app.get("/api/protected", authenticate, (req, res) => {
   res.json({
     message: "You have accessed a protected route!",
     userId: req.user.userId,
   });
 });
 
-// 🔹 Logout (Frontend handles token removal)
-app.post("/logout", (req, res) => {
+// --------------------
+// Logout Route (Frontend handles token removal)
+// --------------------
+app.post("/api/auth/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
+// --------------------
 // Start Server
-app.listen(5000, () => console.log("Server running on port 5000"));
+// --------------------
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
