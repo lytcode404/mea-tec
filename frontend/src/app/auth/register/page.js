@@ -34,36 +34,44 @@ export default function RegisterPage() {
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = async (data) => {
-    setLoading(true); // Show loading spinner
-    try {
-      const res = await registerUser(data);
-      if (res.data) {
-        toast.success("Registration successful! Logging in...", {
-          position: "top-right",
-          autoClose: 2000,
-        });
+ const onSubmit = async (data) => {
+   setLoading(true);
+   try {
+     const res = await registerUser(data);
+     // If registration is successful (res.data exists)
+     if (res.data) {
+       toast.success("Registration successful! Logging in...", {
+         position: "top-right",
+         autoClose: 2000,
+       });
 
-        // Auto-login after registration
-        const loginRes = await loginUser({
-          email: data.email,
-          password: data.password,
-        });
-        if (loginRes.data.token) {
-          dispatch(login(loginRes.data.token));
-          setTimeout(() => {
-            router.push("/tasks"); // Redirect to tasks page
-          }, 2000);
-        }
-      } else {
-        toast.error("Registration failed! Try again.");
-      }
-    } catch (err) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false); // Hide loading spinner
-    }
-  };
+       // Auto-login after registration
+       const loginRes = await loginUser({
+         email: data.email,
+         password: data.password,
+       });
+       // Ensure loginRes contains both token and user details
+       if (loginRes.token) {
+         // Dispatch the complete payload so Redux gets token and user details
+         dispatch(login({ token: loginRes.token, user: loginRes.user }));
+         setTimeout(() => {
+           router.push("/tasks");
+         }, 2000);
+       } else {
+         toast.error("Login failed after registration. Please try logging in.");
+       }
+     }
+   } catch (err) {
+     // Show actual error message from backend if available
+     if (err.response && err.response.data && err.response.data.message) {
+       toast.error(err.response.data.message);
+     } else {
+       toast.error("Registration failed. Please try again.");
+     }
+   } finally {
+     setLoading(false);
+   }
+ };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-4">
