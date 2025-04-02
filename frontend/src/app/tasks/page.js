@@ -116,7 +116,7 @@ export default function TasksPage() {
               />
             </svg>
             <p className="text-xl">
-              No tasks yet. Click "Add Task" to get started!
+              No tasks yet. Click &quot;Add Task&quot; to get started!
             </p>
           </div>
         ) : (
