@@ -8,7 +8,7 @@ import { login } from "@/redux/slices/authSlice";
 
 export default function Providers({ children }) {
   const pathname = usePathname();
-  const isAuthPage = pathname.startsWith("/auth");
+  const isAuthPage = pathname.startsWith("/auth") || pathname === "/";
 
   return (
     <Provider store={store}>
